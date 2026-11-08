@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #08090e;
+    color: #e2e8f0;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Utilities for low-end device 60fps performance */
+.hardware-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Solana Neon Gradients */
+.sol-gradient-text {
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sol-gradient-purple {
+  background: linear-gradient(135deg, #9945FF 0%, #7928CA 100%);
+}
+
+.sol-gradient-cyan {
+  background: linear-gradient(135deg, #14F195 0%, #00F2FE 100%);
+}
+
+.sol-glass {
+  background: rgba(18, 20, 32, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sol-glass-card {
+  background: linear-gradient(180deg, rgba(26, 29, 46, 0.6) 0%, rgba(14, 16, 26, 0.8) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(153, 69, 255, 0.15);
+}
+
+.sol-glow-hover:hover {
+  box-shadow: 0 0 25px rgba(153, 69, 255, 0.35);
+  border-color: rgba(20, 241, 149, 0.4);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090a10;
+}
+::-webkit-scrollbar-thumb {
+  background: #232738;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9945FF;
+}
+
+/* Pulse animation for node status */
+@keyframes radar-pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.3; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.radar-dot {
+  animation: radar-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
