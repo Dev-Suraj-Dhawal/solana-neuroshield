@@ -158,19 +158,26 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
           <div className="flex items-center gap-3">
             <label className="text-xs text-slate-300 font-medium">Tick Size:</label>
-            <div className="flex gap-1.5">
-              {[0.0001, 0.0002, 0.0005, 0.001].map((rate) => (
+            <div className="flex gap-1.5 flex-wrap">
+              {[
+                { rate: 0.0001, usd: '$0.02' },
+                { rate: 0.0002, usd: '$0.04' },
+                { rate: 0.0005, usd: '$0.09' },
+                { rate: 0.001, usd: '$0.18' },
+              ].map(({ rate, usd }) => (
                 <button
                   key={rate}
                   onClick={() => setRatePerTick(rate)}
                   disabled={isStreaming}
+                  title={`Stream ${rate} SOL (~${usd}) per tick`}
                   className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition cursor-pointer ${
                     ratePerTick === rate
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-purple-600 text-white shadow-sm'
                       : 'bg-slate-800 text-slate-400 hover:text-white'
                   }`}
                 >
-                  {rate} SOL
+                  <span>{rate} SOL</span>
+                  <span className="text-[10px] opacity-75 ml-1">({usd})</span>
                 </button>
               ))}
             </div>

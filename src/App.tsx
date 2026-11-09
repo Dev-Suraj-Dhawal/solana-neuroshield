@@ -142,6 +142,21 @@ export function App() {
     });
   };
 
+  const handleClearWallet = () => {
+    setWallet(null);
+    try {
+      localStorage.removeItem('neuroshield_burner_wallet');
+    } catch (e) {
+      // ignore
+    }
+    addActivityEvent({
+      type: 'AUDIT',
+      title: 'Burner Keypair Wiped',
+      description: 'Session destroyed from browser localStorage memory.',
+      status: 'SAFE',
+    });
+  };
+
   const handleUpdateWallet = (updated: BurnerWallet) => {
     setWallet(updated);
     try {
@@ -311,6 +326,7 @@ export function App() {
                     onRefreshBalance={handleRefreshBalance}
                     onUpdateWallet={handleUpdateWallet}
                     onGenerateNewWallet={handleGenerateWallet}
+                    onClearWallet={handleClearWallet}
                   />
                 </div>
               )}
@@ -324,6 +340,7 @@ export function App() {
                 onRefreshBalance={handleRefreshBalance}
                 onUpdateWallet={handleUpdateWallet}
                 onGenerateNewWallet={handleGenerateWallet}
+                onClearWallet={handleClearWallet}
               />
 
               {/* Hackathon Quick Summary Box */}

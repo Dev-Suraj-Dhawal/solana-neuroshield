@@ -66,22 +66,36 @@ export const AIFirewallCard: React.FC<AIFirewallCardProps> = ({ network }) => {
             Test Preset Attack Vectors & Verified Contracts
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {PRESET_CONTRACTS.map((preset, idx) => (
-              <button
-                key={idx}
-                onClick={() => selectPreset(preset.address)}
-                className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
-                  addressInput === preset.address
-                    ? 'border-purple-500 bg-purple-950/40 shadow-sm'
-                    : 'border-slate-800 bg-slate-900/50 hover:bg-slate-800/80'
-                }`}
-              >
-                <div className="text-xs font-bold text-slate-200">{preset.label}</div>
-                <div className="text-[11px] text-slate-400 mt-1 line-clamp-1">
-                  {preset.description}
-                </div>
-              </button>
-            ))}
+            {PRESET_CONTRACTS.map((preset, idx) => {
+              const typeColor = {
+                SAFE: 'bg-emerald-500/15 text-[#14F195] border-emerald-500/30',
+                DRAINER: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+                HONEYPOT: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+                MICROPAY: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+              }[preset.type];
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => selectPreset(preset.address)}
+                  className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                    addressInput === preset.address
+                      ? 'border-purple-500 bg-purple-950/40 shadow-sm'
+                      : 'border-slate-800 bg-slate-900/50 hover:bg-slate-800/80'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-bold text-slate-200">{preset.label}</span>
+                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${typeColor}`}>
+                      {preset.type}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-1 line-clamp-1">
+                    {preset.description}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 

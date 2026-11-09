@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, RefreshCw, ArrowUpRight, Zap, AlertTriangle, ShieldCheck, QrCode } from 'lucide-react';
+import { Copy, Check, RefreshCw, ArrowUpRight, Zap, AlertTriangle, ShieldCheck, QrCode, Key, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { BurnerWallet, NetworkType } from '../types';
 import { requestDevnetAirdrop, getExplorerUrl } from '../services/solanaRpc';
 import { analyzeTargetAddress } from '../services/neuroEngine';
@@ -13,6 +13,7 @@ interface WalletCardProps {
   onRefreshBalance: () => void;
   onUpdateWallet: (updated: BurnerWallet) => void;
   onGenerateNewWallet: () => void;
+  onClearWallet?: () => void;
 }
 
 export const WalletCard: React.FC<WalletCardProps> = ({
@@ -21,11 +22,17 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   onRefreshBalance,
   onUpdateWallet,
   onGenerateNewWallet,
+  onClearWallet,
 }) => {
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [secretCopied, setSecretCopied] = useState(false);
   const [airdropping, setAirdropping] = useState(false);
   const [airdropMsg, setAirdropMsg] = useState<string | null>(null);
+
+  // Keypair Security Details
+  const [showKeyDetails, setShowKeyDetails] = useState(false);
+  const [revealSecret, setRevealSecret] = useState(false);
 
   // Send Form
   const [recipient, setRecipient] = useState('');
@@ -46,6 +53,26 @@ export const WalletCard: React.FC<WalletCardProps> = ({
     setCopied(true);
     showToast('Public address copied to clipboard', 'info', 'Address Copied');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopySecret = () => {
+    if (!wallet) return;
+    navigator.clipboard.writeText(wallet.secretKey);
+    setSecretCopied(true);
+    showToast('Secret key copied. Store securely and never share!', 'warning', 'Secret Key Copied');
+    setTimeout(() => setSecretCopied(false), 2000);
+  };
+
+  const handleClearSession = () => {
+    try {
+      localStorage.removeItem('neuroshield_burner_wallet');
+    } catch (e) {
+      // ignore
+    }
+    if (onClearWallet) {
+      onClearWallet();
+    }
+    showToast('Burner session wiped from local browser memory', 'info', 'Session Cleared');
   };
 
   const handleAirdrop = async () => {
@@ -183,6 +210,17 @@ export const WalletCard: React.FC<WalletCardProps> = ({
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowKeyDetails(!showKeyDetails)}
+            className={`p-2 rounded-lg text-xs transition cursor-pointer flex items-center gap-1 ${
+              showKeyDetails
+                ? 'bg-purple-600 text-white'
+                : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+            }`}
+            title="Keypair & Export Security Settings"
+          >
+            <Key className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => setShowQR(!showQR)}
             className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs transition cursor-pointer"
             title="Toggle QR Code"
@@ -259,6 +297,57 @@ export const WalletCard: React.FC<WalletCardProps> = ({
             </a>
           </div>
         </div>
+
+        {/* Keypair Security & Export Accordion */}
+        {showKeyDetails && (
+          <div className="p-4 rounded-xl bg-slate-950/90 border border-purple-500/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Key className="w-4 h-4 text-purple-400" />
+                <span className="font-bold text-xs text-white">Private Key & Wallet Backup</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRevealSecret(!revealSecret)}
+                className="text-[11px] text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1 cursor-pointer"
+              >
+                {revealSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                <span>{revealSecret ? 'Hide Secret' : 'Reveal Secret'}</span>
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 font-mono text-xs text-slate-300 truncate">
+                  {revealSecret ? wallet.secretKey : '••••••••••••••••••••••••••••••••••••••••••••••••'}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopySecret}
+                  className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                >
+                  {secretCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{secretCopied ? 'Copied' : 'Copy Key'}</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-tight">
+                💡 <strong className="text-slate-300">Phantom / Solflare Import:</strong> Go to Settings &gt; Add/Connect Wallet &gt; Import Private Key &gt; Paste this base58 string to control this burner address in external wallets.
+              </p>
+            </div>
+
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">Stored in browser memory only</span>
+              <button
+                type="button"
+                onClick={handleClearSession}
+                className="px-2.5 py-1 rounded-md bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-500/30 text-[11px] font-semibold flex items-center gap-1 transition cursor-pointer"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>Wipe Keypair</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* QR Code toggle modal view */}
         {showQR && (
