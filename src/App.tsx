@@ -5,13 +5,16 @@ import { WalletCard } from './components/WalletCard';
 import { AIFirewallCard } from './components/AIFirewallCard';
 import { AgentConsole } from './components/AgentConsole';
 import { MicroStreamCard } from './components/MicroStreamCard';
+import { ActivityFeed, ActivityEvent } from './components/ActivityFeed';
 import { HackathonDrawer } from './components/HackathonDrawer';
 import { Footer } from './components/Footer';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from './types';
 import { fetchSolanaTelemetry, generateEphemeralSolanaWallet, fetchWalletBalance } from './services/solanaRpc';
-import { ShieldAlert, Bot, Flame, Wallet, Sparkles } from 'lucide-react';
+import { useToast } from './components/Toast';
+import { ShieldAlert, Bot, Flame, History, Wallet, Sparkles } from 'lucide-react';
 
 export function App() {
+  const { showToast } = useToast();
   const [network, setNetwork] = useState<NetworkType>('devnet');
   const [telemetry, setTelemetry] = useState<NetworkTelemetry>({
     tps: 2840,
@@ -33,8 +36,37 @@ export function App() {
     return null;
   });
 
-  const [activeTab, setActiveTab] = useState<'scanner' | 'agent' | 'stream' | 'wallet'>('scanner');
+  const [activeTab, setActiveTab] = useState<'scanner' | 'agent' | 'stream' | 'activity' | 'wallet'>('scanner');
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+
+  // Live Activity Log
+  const [events, setEvents] = useState<ActivityEvent[]>([
+    {
+      id: 'init-1',
+      type: 'AUDIT',
+      title: 'NeuroShield Sentinel Engine Initialized',
+      description: 'Devnet heuristic inspection node online with 400ms payload simulation.',
+      timestamp: 'Just now',
+      status: 'SAFE',
+    },
+    {
+      id: 'init-2',
+      type: 'AIRDROP',
+      title: 'Solana Devnet Telemetry Connected',
+      description: 'Cluster health operational at 2,800+ TPS with sub-$0.0003 average fee.',
+      timestamp: 'Just now',
+      status: 'SUCCESS',
+    },
+  ]);
+
+  const addActivityEvent = (event: Omit<ActivityEvent, 'id' | 'timestamp'>) => {
+    const newEvent: ActivityEvent = {
+      ...event,
+      id: 'ev-' + Math.random().toString(36).substring(2, 9),
+      timestamp: new Date().toLocaleTimeString(),
+    };
+    setEvents((prev) => [newEvent, ...prev.slice(0, 49)]); // keep latest 50
+  };
 
   // Poll Solana Telemetry
   useEffect(() => {
@@ -65,6 +97,24 @@ export function App() {
     checkBalance();
   }, [wallet?.publicKey, network]);
 
+  const handleRefreshBalance = async () => {
+    if (!wallet) {
+      showToast('Generate a burner wallet first to check balance.', 'info');
+      return;
+    }
+    showToast('Querying Solana RPC cluster...', 'info', 'Refreshing Balance');
+    const realBal = await fetchWalletBalance(wallet.publicKey, network);
+    setWallet((prev) => (prev ? { ...prev, balanceSol: realBal } : null));
+    showToast(`Balance updated: ${realBal.toFixed(4)} SOL`, 'success', 'Balance Synced');
+    addActivityEvent({
+      type: 'TRANSFER',
+      title: 'Balance Synced via RPC',
+      description: `Queried Solana Devnet state: ${realBal.toFixed(4)} SOL available.`,
+      status: 'SUCCESS',
+      amountSol: realBal,
+    });
+  };
+
   const handleGenerateWallet = () => {
     const ephem = generateEphemeralSolanaWallet();
     const newWallet: BurnerWallet = {
@@ -80,6 +130,15 @@ export function App() {
     } catch (e) {
       // ignore
     }
+
+    showToast('New burner keypair generated with +1.0 SOL devnet boost!', 'success', 'Wallet Ready');
+    addActivityEvent({
+      type: 'AIRDROP',
+      title: 'Ephemeral Burner Keypair Created',
+      description: `Initialized zero-setup Ed25519 wallet (${ephem.publicKey.substring(0, 6)}...${ephem.publicKey.slice(-4)}) with 1.0 SOL Devnet boost.`,
+      status: 'SUCCESS',
+      amountSol: 1.0,
+    });
   };
 
   const handleUpdateWallet = (updated: BurnerWallet) => {
@@ -112,11 +171,11 @@ export function App() {
       />
 
       {/* Main Content */}
-      <main className="flex-1 pb-20 md:pb-12">
+      <main className="flex-1 pb-24 md:pb-12">
         {/* Hero Section */}
         <HeroSection
           telemetry={telemetry}
-          onSelectTab={setActiveTab}
+          onSelectTab={(tab) => setActiveTab(tab)}
           onGenerateWallet={handleGenerateWallet}
           hasWallet={!!wallet}
         />
@@ -163,14 +222,32 @@ export function App() {
               </button>
 
               <button
-                onClick={() => setActiveTab('wallet')}
+                onClick={() => setActiveTab('activity')}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer shrink-0 ${
+                  activeTab === 'activity'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                <History className="w-4 h-4 text-cyan-300" />
+                <span>Activity & Audit Log</span>
+                {events.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500/20 text-cyan-300">
+                    {events.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Mobile-Only Wallet Tab for Bottom Nav Sync */}
+              <button
+                onClick={() => setActiveTab('wallet')}
+                className={`lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer shrink-0 ${
                   activeTab === 'wallet'
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
-                <Wallet className="w-4 h-4 text-cyan-300" />
+                <Wallet className="w-4 h-4 text-amber-300" />
                 <span>Burner Wallet</span>
               </button>
             </div>
@@ -184,45 +261,62 @@ export function App() {
 
           {/* Tab Views */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Main Interactive Workstation */}
+            {/* Main Interactive Workstation (Left 8 Columns) */}
             <div className="lg:col-span-8 space-y-6">
               {activeTab === 'scanner' && <AIFirewallCard network={network} />}
               {activeTab === 'agent' && (
                 <AgentConsole
                   wallet={wallet}
                   network={network}
-                  onWalletUpdated={handleUpdateWallet}
+                  onWalletUpdated={(updated) => {
+                    handleUpdateWallet(updated);
+                    addActivityEvent({
+                      type: 'AGENT',
+                      title: 'Autonomous Agent Action Confirmed',
+                      description: 'AI translated natural language prompt into executed Solana Devnet transaction.',
+                      status: 'SUCCESS',
+                    });
+                  }}
                 />
               )}
               {activeTab === 'stream' && (
                 <MicroStreamCard
                   wallet={wallet}
                   network={network}
-                  onDeductBalance={handleDeductBalance}
+                  onDeductBalance={(amt) => {
+                    handleDeductBalance(amt);
+                  }}
+                />
+              )}
+              {activeTab === 'activity' && (
+                <ActivityFeed
+                  events={events}
+                  network={network}
+                  onClearEvents={() => setEvents([])}
                 />
               )}
               {activeTab === 'wallet' && (
-                <WalletCard
-                  wallet={wallet}
-                  network={network}
-                  onRefreshBalance={() => {}}
-                  onUpdateWallet={handleUpdateWallet}
-                  onGenerateNewWallet={handleGenerateWallet}
-                />
+                <div className="lg:hidden">
+                  <WalletCard
+                    wallet={wallet}
+                    network={network}
+                    onRefreshBalance={handleRefreshBalance}
+                    onUpdateWallet={handleUpdateWallet}
+                    onGenerateNewWallet={handleGenerateWallet}
+                  />
+                </div>
               )}
             </div>
 
-            {/* Side Companion Panel: Always Accessible Instant Wallet */}
-            <div className="lg:col-span-4 space-y-6">
-              {activeTab !== 'wallet' && (
-                <WalletCard
-                  wallet={wallet}
-                  network={network}
-                  onRefreshBalance={() => {}}
-                  onUpdateWallet={handleUpdateWallet}
-                  onGenerateNewWallet={handleGenerateWallet}
-                />
-              )}
+            {/* Side Companion Panel (Right 4 Columns): Permanent Anchor on Desktop */}
+            <div className="hidden lg:block lg:col-span-4 space-y-6">
+              <WalletCard
+                wallet={wallet}
+                network={network}
+                onRefreshBalance={handleRefreshBalance}
+                onUpdateWallet={handleUpdateWallet}
+                onGenerateNewWallet={handleGenerateWallet}
+              />
 
               {/* Hackathon Quick Summary Box */}
               <div className="sol-glass rounded-2xl p-5 border border-purple-500/20 space-y-3">
@@ -250,11 +344,11 @@ export function App() {
         </section>
       </main>
 
-      {/* Mobile Sticky Bottom Navigation for low-end smartphone convenience */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 border-t border-slate-800 px-4 py-2 flex items-center justify-around backdrop-blur-lg">
+      {/* Mobile Sticky Bottom Navigation with Safe Area Padding */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 border-t border-slate-800 px-4 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around backdrop-blur-lg">
         <button
           onClick={() => setActiveTab('scanner')}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition ${
+          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition cursor-pointer ${
             activeTab === 'scanner' ? 'text-[#14F195]' : 'text-slate-400'
           }`}
         >
@@ -264,7 +358,7 @@ export function App() {
 
         <button
           onClick={() => setActiveTab('agent')}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition ${
+          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition cursor-pointer ${
             activeTab === 'agent' ? 'text-purple-400' : 'text-slate-400'
           }`}
         >
@@ -274,7 +368,7 @@ export function App() {
 
         <button
           onClick={() => setActiveTab('stream')}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition ${
+          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition cursor-pointer ${
             activeTab === 'stream' ? 'text-cyan-400' : 'text-slate-400'
           }`}
         >
@@ -283,8 +377,18 @@ export function App() {
         </button>
 
         <button
+          onClick={() => setActiveTab('activity')}
+          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition cursor-pointer ${
+            activeTab === 'activity' ? 'text-emerald-400' : 'text-slate-400'
+          }`}
+        >
+          <History className="w-5 h-5" />
+          <span>Activity</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('wallet')}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition ${
+          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition cursor-pointer ${
             activeTab === 'wallet' ? 'text-amber-400' : 'text-slate-400'
           }`}
         >
