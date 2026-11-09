@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Zap, ExternalLink, Activity, Sparkles, Award } from 'lucide-react';
+import { Shield, Zap, ExternalLink, Activity, Sparkles, Award, ShieldCheck } from 'lucide-react';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from '../types';
 
 interface NavbarProps {
@@ -47,23 +47,45 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Live Network Telemetry Pill */}
-        <div className="hidden md:flex items-center gap-4 bg-slate-900/60 border border-slate-800 rounded-full px-4 py-1.5 text-xs text-slate-300">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#14F195] animate-pulse"></span>
-            <span className="font-mono text-slate-400">TPS:</span>
-            <span className="font-mono font-semibold text-[#14F195]">{telemetry.tps.toLocaleString()}</span>
-          </div>
-          <span className="text-slate-700">|</span>
-          <div className="flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="font-mono text-slate-400">Latency:</span>
-            <span className="font-mono text-cyan-300">{telemetry.blockTimeMs}ms</span>
-          </div>
-          <span className="text-slate-700">|</span>
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono text-slate-400">Fee:</span>
-            <span className="font-mono text-purple-300">&lt;$0.0003</span>
+        {/* Live Network Telemetry & Zero-Risk Reassurance */}
+        <div className="hidden lg:flex items-center gap-3">
+          {/* Zero Financial Risk Badge */}
+          {network === 'devnet' && (
+            <div
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[11px] font-medium text-emerald-300"
+              title="Devnet testnet mode active: Transactions use free test tokens. Zero real funds at risk."
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-[#14F195]" />
+              <span>Zero-Risk Sandbox</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 bg-slate-900/60 border border-slate-800 rounded-full px-4 py-1.5 text-xs text-slate-300">
+            <div
+              className="flex items-center gap-1.5"
+              title="Transactions Per Second currently processed by the Solana cluster"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#14F195] animate-pulse"></span>
+              <span className="font-mono text-slate-400">TPS:</span>
+              <span className="font-mono font-semibold text-[#14F195]">{telemetry.tps.toLocaleString()}</span>
+            </div>
+            <span className="text-slate-700">|</span>
+            <div
+              className="flex items-center gap-1.5"
+              title="Average block creation latency on Solana (~400 milliseconds)"
+            >
+              <Activity className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="font-mono text-slate-400">Latency:</span>
+              <span className="font-mono text-cyan-300">{telemetry.blockTimeMs}ms</span>
+            </div>
+            <span className="text-slate-700">|</span>
+            <div
+              className="flex items-center gap-1.5"
+              title="Predictable sub-cent Solana transaction fee"
+            >
+              <span className="font-mono text-slate-400">Fee:</span>
+              <span className="font-mono text-purple-300">&lt;$0.0003</span>
+            </div>
           </div>
         </div>
 

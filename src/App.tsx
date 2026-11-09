@@ -6,6 +6,7 @@ import { AIFirewallCard } from './components/AIFirewallCard';
 import { AgentConsole } from './components/AgentConsole';
 import { MicroStreamCard } from './components/MicroStreamCard';
 import { ActivityFeed, ActivityEvent } from './components/ActivityFeed';
+import { QuickStartGuide } from './components/QuickStartGuide';
 import { HackathonDrawer } from './components/HackathonDrawer';
 import { Footer } from './components/Footer';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from './types';
@@ -178,6 +179,13 @@ export function App() {
           onSelectTab={(tab) => setActiveTab(tab)}
           onGenerateWallet={handleGenerateWallet}
           hasWallet={!!wallet}
+        />
+
+        {/* 60-Second Onboarding Tour */}
+        <QuickStartGuide
+          hasWallet={!!wallet}
+          onGenerateWallet={handleGenerateWallet}
+          onSelectTab={(tab) => setActiveTab(tab)}
         />
 
         {/* Feature Modules Section */}
