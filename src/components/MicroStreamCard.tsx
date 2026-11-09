@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Flame, Play, Pause, RotateCcw, Zap, ExternalLink, ArrowUpRight, Activity } from 'lucide-react';
 import { BurnerWallet, NetworkType } from '../types';
 import { generateMockTxSignature, getExplorerUrl } from '../services/solanaRpc';
+import { useToast } from './Toast';
 
 interface MicroStreamCardProps {
   wallet: BurnerWallet | null;
@@ -21,6 +22,7 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
   network,
   onDeductBalance,
 }) => {
+  const { showToast } = useToast();
   const [isStreaming, setIsStreaming] = useState(false);
   const [ratePerTick, setRatePerTick] = useState(0.0002); // 0.0002 SOL per tick
   const [ticksCount, setTicksCount] = useState(0);
@@ -30,15 +32,17 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
 
   const startStream = () => {
     if (!wallet || wallet.balanceSol < ratePerTick) {
-      alert('Your wallet balance is too low to stream. Request a Devnet Airdrop in the wallet card!');
+      showToast('Your wallet balance is too low to stream. Request a Devnet Airdrop in the wallet card!', 'warning', 'Insufficient Balance');
       return;
     }
     setIsStreaming(true);
+    showToast(`Micro-payment stream started (${ratePerTick} SOL/tick)`, 'success', 'Streaming Active');
   };
 
   const pauseStream = () => {
     setIsStreaming(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
+    showToast('Micro-payment stream paused', 'info', 'Stream Paused');
   };
 
   const resetStream = () => {
@@ -46,6 +50,7 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
     setTicksCount(0);
     setTotalStreamed(0);
     setRecentTicks([]);
+    showToast('Stream counters reset', 'info', 'Stream Reset');
   };
 
   useEffect(() => {
@@ -54,7 +59,7 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
         // Stop if wallet depleted
         if (wallet && wallet.balanceSol <= ratePerTick) {
           pauseStream();
-          alert('Stream paused: Wallet balance depleted.');
+          showToast('Stream paused: Wallet balance depleted.', 'warning', 'Balance Depleted');
           return;
         }
 

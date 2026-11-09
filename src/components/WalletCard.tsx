@@ -3,6 +3,8 @@ import { Copy, Check, RefreshCw, ArrowUpRight, Zap, AlertTriangle, ShieldCheck, 
 import { BurnerWallet, NetworkType } from '../types';
 import { requestDevnetAirdrop, getExplorerUrl } from '../services/solanaRpc';
 import { analyzeTargetAddress } from '../services/neuroEngine';
+import { useToast } from './Toast';
+import { SecurityConfirmationModal } from './SecurityConfirmationModal';
 import confetti from 'canvas-confetti';
 
 interface WalletCardProps {
@@ -20,6 +22,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   onUpdateWallet,
   onGenerateNewWallet,
 }) => {
+  const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
   const [airdropping, setAirdropping] = useState(false);
   const [airdropMsg, setAirdropMsg] = useState<string | null>(null);
@@ -32,10 +35,16 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   const [preCheckRisk, setPreCheckRisk] = useState<string | null>(null);
   const [showQR, setShowQR] = useState(false);
 
+  // Security Interception Modal
+  const [threatModalOpen, setThreatModalOpen] = useState(false);
+  const [pendingSendParams, setPendingSendParams] = useState<{ amount: number; recipient: string } | null>(null);
+  const [threatWarning, setThreatWarning] = useState('');
+
   const handleCopy = () => {
     if (!wallet) return;
     navigator.clipboard.writeText(wallet.publicKey);
     setCopied(true);
+    showToast('Public address copied to clipboard', 'info', 'Address Copied');
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -49,6 +58,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
 
     if (res.success) {
       setAirdropMsg(res.message);
+      showToast(res.message, 'success', 'Devnet Airdrop Received');
       // Credit balance
       onUpdateWallet({
         ...wallet,
@@ -61,6 +71,8 @@ export const WalletCard: React.FC<WalletCardProps> = ({
         origin: { y: 0.7 },
         colors: ['#9945FF', '#14F195', '#00F2FE'],
       });
+    } else {
+      showToast(res.message, 'error', 'Airdrop Request Failed');
     }
   };
 
@@ -78,43 +90,22 @@ export const WalletCard: React.FC<WalletCardProps> = ({
     }
   };
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!wallet || !recipient) return;
-
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
-    if (wallet.balanceSol < parsedAmount) {
-      alert('Insufficient SOL balance! Click "Request Devnet Airdrop" to fund your burner wallet.');
-      return;
-    }
-
+  const executeSendTransaction = (targetRecipient: string, targetAmount: number) => {
+    if (!wallet) return;
     setSending(true);
     setSendSuccessMsg(null);
-
-    // Run AI pre-check
-    const audit = analyzeTargetAddress(recipient, network);
-    if (audit.riskLevel === 'CRITICAL') {
-      const confirmed = window.confirm(
-        '🚨 CRITICAL THREAT DETECTED by NeuroShield: The destination address matches known drainer signatures. Proceed anyway?'
-      );
-      if (!confirmed) {
-        setSending(false);
-        return;
-      }
-    }
 
     // Simulate high-speed Solana transaction
     setTimeout(() => {
       setSending(false);
       onUpdateWallet({
         ...wallet,
-        balanceSol: Math.max(0, wallet.balanceSol - parsedAmount - 0.000005),
+        balanceSol: Math.max(0, wallet.balanceSol - targetAmount - 0.000005),
       });
 
-      setSendSuccessMsg(
-        `Successfully sent ${parsedAmount} SOL at Solana sub-second speed! Network fee: 0.000005 SOL.`
-      );
+      const successTxt = `Successfully sent ${targetAmount} SOL at Solana sub-second speed! Network fee: 0.000005 SOL.`;
+      setSendSuccessMsg(successTxt);
+      showToast(successTxt, 'success', 'Transaction Confirmed');
 
       confetti({
         particleCount: 50,
@@ -123,6 +114,32 @@ export const WalletCard: React.FC<WalletCardProps> = ({
         colors: ['#14F195', '#9945FF'],
       });
     }, 600);
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wallet || !recipient) return;
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
+    if (wallet.balanceSol < parsedAmount) {
+      showToast('Insufficient SOL balance! Click "Request Devnet Airdrop" to fund your burner wallet.', 'warning', 'Low Balance');
+      return;
+    }
+
+    // Run AI pre-check
+    const audit = analyzeTargetAddress(recipient, network);
+    if (audit.riskLevel === 'CRITICAL') {
+      setThreatWarning(
+        audit.threatsDetected[0]?.description ||
+          'Matches known malicious drainer contract payload signature. Immediate asset extraction risk detected.'
+      );
+      setPendingSendParams({ recipient, amount: parsedAmount });
+      setThreatModalOpen(true);
+      return;
+    }
+
+    executeSendTransaction(recipient, parsedAmount);
   };
 
   if (!wallet) {
@@ -329,6 +346,23 @@ export const WalletCard: React.FC<WalletCardProps> = ({
           </button>
         </form>
       </div>
+
+      {/* Security Threat Interception Dialog */}
+      <SecurityConfirmationModal
+        isOpen={threatModalOpen}
+        onClose={() => {
+          setThreatModalOpen(false);
+          setPendingSendParams(null);
+        }}
+        onConfirm={() => {
+          if (pendingSendParams) {
+            executeSendTransaction(pendingSendParams.recipient, pendingSendParams.amount);
+          }
+        }}
+        recipientAddress={pendingSendParams?.recipient || ''}
+        amountSol={pendingSendParams?.amount.toString() || '0'}
+        warningMessage={threatWarning}
+      />
     </div>
   );
 };
