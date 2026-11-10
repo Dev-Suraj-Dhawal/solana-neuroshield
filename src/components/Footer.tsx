@@ -60,12 +60,23 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSubmissionModal }) => {
           </a>
         </div>
 
-        <div className="text-center md:text-right">
+        <div className="text-center md:text-right" itemScope itemType="https://schema.org/Person">
           <p className="text-slate-400">
             Crafted for <strong className="text-white">Solana Hackathon 2026</strong>
           </p>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Architected by <span className="text-[#14F195] font-semibold">Suraj Dhawal</span>
+            Architected by{' '}
+            <a
+              href="https://github.com/Dev-Suraj-Dhawal"
+              target="_blank"
+              rel="author me external noopener noreferrer"
+              itemProp="url"
+              className="text-[#14F195] hover:underline font-bold transition inline-flex items-center gap-1"
+              title="Suraj Dhawal (@Dev-Suraj-Dhawal) - Creator Profile"
+            >
+              <span itemProp="name">Suraj Dhawal</span>
+              <span className="text-slate-500 font-mono text-[10px]">(@Dev-Suraj-Dhawal)</span>
+            </a>
           </p>
         </div>
       </div>

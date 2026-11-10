@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Canonical Sitemap for Search Engines
+Sitemap: https://dev-suraj-dhawal.github.io/solana-neuroshield/sitemap.xml

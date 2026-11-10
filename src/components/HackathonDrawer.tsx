@@ -159,7 +159,16 @@ export const HackathonDrawer: React.FC<HackathonDrawerProps> = ({ isOpen, onClos
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
           <div className="text-slate-400">
-            Author: <strong className="text-white">Suraj Dhawal</strong>
+            Author:{' '}
+            <a
+              href="https://github.com/Dev-Suraj-Dhawal"
+              target="_blank"
+              rel="author me external noopener noreferrer"
+              className="text-[#14F195] hover:underline font-bold transition inline-flex items-center gap-1"
+              title="Suraj Dhawal - Official GitHub Profile"
+            >
+              Suraj Dhawal <span className="text-slate-500 font-mono text-[10px]">(@Dev-Suraj-Dhawal)</span>
+            </a>
           </div>
           <button
             onClick={onClose}

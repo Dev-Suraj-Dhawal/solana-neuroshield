@@ -42,7 +42,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden sm:block">
-              Solana Autonomous Security & Micro-Payments Engine
+              Solana Autonomous Security & Micro-Payments Engine · by{' '}
+              <a
+                href="https://github.com/Dev-Suraj-Dhawal"
+                target="_blank"
+                rel="author me external noopener noreferrer"
+                className="text-[#14F195] hover:underline font-semibold"
+                title="Suraj Dhawal (@Dev-Suraj-Dhawal) Official Profile"
+              >
+                Suraj Dhawal
+              </a>
             </p>
           </div>
         </div>
