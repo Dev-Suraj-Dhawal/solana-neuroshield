@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🛡️ Security Vulnerability Reporting
+    url: mailto:surajdhawal.dev@gmail.com
+    about: Please report security vulnerabilities via coordinated private disclosure as outlined in SECURITY.md
+  - name: 💬 Solana NeuroShield Discussions
+    url: https://github.com/Dev-Suraj-Dhawal/solana-neuroshield/discussions
+    about: Ask questions, discuss architecture, or share feedback
