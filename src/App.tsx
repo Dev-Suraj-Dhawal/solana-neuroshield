@@ -85,6 +85,27 @@ export function App() {
     };
   }, [network]);
 
+  // Global Keyboard Shortcuts (1-4 for quick workstation tab navigation, Esc to close modal)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName) ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === '1') setActiveTab('scanner');
+      else if (e.key === '2') setActiveTab('agent');
+      else if (e.key === '3') setActiveTab('stream');
+      else if (e.key === '4') setActiveTab('activity');
+      else if (e.key === 'Escape') setIsSubmissionModalOpen(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Sync wallet balance
   useEffect(() => {
     if (!wallet) return;
@@ -215,9 +236,11 @@ export function App() {
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
+                title="AI Threat Sentinel (Shortcut: 1)"
               >
                 <ShieldAlert className="w-4 h-4 text-[#14F195]" />
                 <span>AI Threat Sentinel</span>
+                <span className="hidden sm:inline-block text-[10px] opacity-60 font-mono px-1 rounded bg-black/30 border border-white/10">1</span>
               </button>
 
               <button
@@ -227,9 +250,11 @@ export function App() {
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
+                title="Prompt-to-Solana Agent (Shortcut: 2)"
               >
                 <Bot className="w-4 h-4 text-purple-300" />
                 <span>Prompt-to-Solana Agent</span>
+                <span className="hidden sm:inline-block text-[10px] opacity-60 font-mono px-1 rounded bg-black/30 border border-white/10">2</span>
               </button>
 
               <button
@@ -239,9 +264,11 @@ export function App() {
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
+                title="Micro-Payment Stream (Shortcut: 3)"
               >
                 <Flame className="w-4 h-4 text-[#14F195]" />
                 <span>Micro-Payment Stream</span>
+                <span className="hidden sm:inline-block text-[10px] opacity-60 font-mono px-1 rounded bg-black/30 border border-white/10">3</span>
               </button>
 
               <button
@@ -251,9 +278,11 @@ export function App() {
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
+                title="Activity & Audit Log (Shortcut: 4)"
               >
                 <History className="w-4 h-4 text-cyan-300" />
                 <span>Activity & Audit Log</span>
+                <span className="hidden sm:inline-block text-[10px] opacity-60 font-mono px-1 rounded bg-black/30 border border-white/10">4</span>
                 {events.length > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500/20 text-cyan-300">
                     {events.length}
