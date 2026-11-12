@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShieldAlert, ShieldCheck, AlertTriangle, Bug, Terminal, ChevronRight, Zap } from 'lucide-react';
 import { SecurityAuditResult, NetworkType } from '../types';
 import { PRESET_CONTRACTS, analyzeTargetAddress } from '../services/neuroEngine';
+import { playThreatWarning, playSuccessChime } from '../services/soundEffects';
 
 interface AIFirewallCardProps {
   network: NetworkType;
@@ -23,6 +24,11 @@ export const AIFirewallCard: React.FC<AIFirewallCardProps> = ({ network }) => {
       const result = analyzeTargetAddress(target, network);
       setAuditResult(result);
       setScanning(false);
+      if (result.riskLevel === 'CRITICAL' || result.riskLevel === 'HIGH') {
+        playThreatWarning();
+      } else {
+        playSuccessChime();
+      }
     }, 400); // Solana ~400ms speed
   };
 

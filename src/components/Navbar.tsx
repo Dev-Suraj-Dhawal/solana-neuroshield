@@ -1,6 +1,7 @@
-import React from 'react';
-import { Shield, Zap, ExternalLink, Activity, Sparkles, Award, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, Zap, ExternalLink, Activity, Sparkles, Award, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from '../types';
+import { getSoundEnabled, setSoundEnabled, playShieldActivate } from '../services/soundEffects';
 
 interface NavbarProps {
   network: NetworkType;
@@ -17,6 +18,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   wallet,
   onOpenSubmissionModal,
 }) => {
+  const [isSoundOn, setIsSoundOn] = useState(getSoundEnabled());
+
+  const handleToggleSound = () => {
+    const next = !isSoundOn;
+    setIsSoundOn(next);
+    setSoundEnabled(next);
+    if (next) playShieldActivate();
+  };
   return (
     <header className="sticky top-0 z-50 sol-glass border-b border-purple-500/10 px-4 lg:px-8 py-3 transition-all">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -109,6 +118,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Award className="w-3.5 h-3.5 text-amber-400" />
             <span className="hidden sm:inline">Hackathon Track Criteria</span>
             <span className="sm:hidden">MLH</span>
+          </button>
+
+          {/* Sound FX Toggle */}
+          <button
+            onClick={handleToggleSound}
+            className="p-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
+            title={isSoundOn ? 'Cyber Sound FX: Active (Click to mute)' : 'Cyber Sound FX: Muted (Click to enable)'}
+            aria-label="Toggle Sound Effects"
+          >
+            {isSoundOn ? (
+              <Volume2 className="w-4 h-4 text-[#14F195]" />
+            ) : (
+              <VolumeX className="w-4 h-4 text-slate-500" />
+            )}
           </button>
 
           {/* Network Switcher */}

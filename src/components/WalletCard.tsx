@@ -5,6 +5,7 @@ import { requestDevnetAirdrop, getExplorerUrl } from '../services/solanaRpc';
 import { analyzeTargetAddress } from '../services/neuroEngine';
 import { useToast } from './Toast';
 import { SecurityConfirmationModal } from './SecurityConfirmationModal';
+import { playSuccessChime, playThreatWarning } from '../services/soundEffects';
 import confetti from 'canvas-confetti';
 
 interface WalletCardProps {
@@ -86,6 +87,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
     if (res.success) {
       setAirdropMsg(res.message);
       showToast(res.message, 'success', 'Devnet Airdrop Received');
+      playSuccessChime();
       // Credit balance
       onUpdateWallet({
         ...wallet,
@@ -133,6 +135,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
       const successTxt = `Successfully sent ${targetAmount} SOL at Solana sub-second speed! Network fee: 0.000005 SOL.`;
       setSendSuccessMsg(successTxt);
       showToast(successTxt, 'success', 'Transaction Confirmed');
+      playSuccessChime();
 
       confetti({
         particleCount: 50,
@@ -157,6 +160,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
     // Run AI pre-check
     const audit = analyzeTargetAddress(recipient, network);
     if (audit.riskLevel === 'CRITICAL') {
+      playThreatWarning();
       setThreatWarning(
         audit.threatsDetected[0]?.description ||
           'Matches known malicious drainer contract payload signature. Immediate asset extraction risk detected.'

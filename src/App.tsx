@@ -12,6 +12,7 @@ import { Footer } from './components/Footer';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from './types';
 import { fetchSolanaTelemetry, generateEphemeralSolanaWallet, fetchWalletBalance } from './services/solanaRpc';
 import { useToast } from './components/Toast';
+import { playShieldActivate, playSuccessChime } from './services/soundEffects';
 import { ShieldAlert, Bot, Flame, History, Wallet, Sparkles } from 'lucide-react';
 
 export function App() {
@@ -128,6 +129,7 @@ export function App() {
     const realBal = await fetchWalletBalance(wallet.publicKey, network);
     setWallet((prev) => (prev ? { ...prev, balanceSol: realBal } : null));
     showToast(`Balance updated: ${realBal.toFixed(4)} SOL`, 'success', 'Balance Synced');
+    playSuccessChime();
     addActivityEvent({
       type: 'TRANSFER',
       title: 'Balance Synced via RPC',
@@ -154,6 +156,7 @@ export function App() {
     }
 
     showToast('New burner keypair generated with +1.0 SOL devnet boost!', 'success', 'Wallet Ready');
+    playShieldActivate();
     addActivityEvent({
       type: 'AIRDROP',
       title: 'Ephemeral Burner Keypair Created',
