@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Zap, ExternalLink, Activity, Sparkles, Award, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
+import { Shield, Zap, ExternalLink, Activity, Sparkles, Award, ShieldCheck, ShieldAlert, Volume2, VolumeX } from 'lucide-react';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from '../types';
 import { getSoundEnabled, setSoundEnabled, playShieldActivate } from '../services/soundEffects';
 
@@ -9,6 +9,8 @@ interface NavbarProps {
   telemetry: NetworkTelemetry;
   wallet: BurnerWallet | null;
   onOpenSubmissionModal: () => void;
+  isCircuitBreakerActive: boolean;
+  onToggleCircuitBreaker: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -17,6 +19,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   telemetry,
   wallet,
   onOpenSubmissionModal,
+  isCircuitBreakerActive,
+  onToggleCircuitBreaker,
 }) => {
   const [isSoundOn, setIsSoundOn] = useState(getSoundEnabled());
 
@@ -109,6 +113,34 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Actions & Network Switch */}
         <div className="flex items-center gap-2.5">
+          {/* Emergency Circuit Breaker Kill-Switch */}
+          <button
+            onClick={onToggleCircuitBreaker}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer ${
+              isCircuitBreakerActive
+                ? 'bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/50 text-rose-300 animate-pulse shadow-lg shadow-rose-950/50'
+                : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 text-slate-300 hover:text-emerald-400'
+            }`}
+            title={
+              isCircuitBreakerActive
+                ? 'Circuit Breaker ENGAGED: Outbound transactions are locked. Click to restore normal operation.'
+                : 'Emergency Circuit Breaker: Click to instantly freeze all outbound transactions.'
+            }
+          >
+            {isCircuitBreakerActive ? (
+              <>
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
+                <span className="hidden sm:inline">CIRCUIT BREAKER ON</span>
+                <span className="sm:hidden">LOCKED</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-3.5 h-3.5 text-[#14F195]" />
+                <span className="hidden md:inline text-slate-400">Kill Switch</span>
+              </>
+            )}
+          </button>
+
           {/* Hackathon Criteria Button */}
           <button
             onClick={onOpenSubmissionModal}

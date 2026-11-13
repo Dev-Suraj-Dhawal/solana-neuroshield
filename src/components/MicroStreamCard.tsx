@@ -8,6 +8,7 @@ interface MicroStreamCardProps {
   wallet: BurnerWallet | null;
   network: NetworkType;
   onDeductBalance: (amount: number) => void;
+  isCircuitBreakerActive?: boolean;
 }
 
 interface StreamTick {
@@ -21,6 +22,7 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
   wallet,
   network,
   onDeductBalance,
+  isCircuitBreakerActive = false,
 }) => {
   const { showToast } = useToast();
   const [isStreaming, setIsStreaming] = useState(false);
@@ -31,6 +33,10 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
   const intervalRef = useRef<number | null>(null);
 
   const startStream = () => {
+    if (isCircuitBreakerActive) {
+      showToast('Stream blocked: Emergency Circuit Breaker is active! Disengage to stream value.', 'error', 'Circuit Breaker Active');
+      return;
+    }
     if (!wallet || wallet.balanceSol < ratePerTick) {
       showToast('Your wallet balance is too low to stream. Request a Devnet Airdrop in the wallet card!', 'warning', 'Insufficient Balance');
       return;
@@ -52,6 +58,13 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
     setRecentTicks([]);
     showToast('Stream counters reset', 'info', 'Stream Reset');
   };
+
+  // Auto-pause if Circuit Breaker is engaged while streaming
+  useEffect(() => {
+    if (isCircuitBreakerActive && isStreaming) {
+      pauseStream();
+    }
+  }, [isCircuitBreakerActive, isStreaming]);
 
   useEffect(() => {
     if (isStreaming) {

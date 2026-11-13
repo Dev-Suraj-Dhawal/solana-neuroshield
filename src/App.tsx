@@ -12,7 +12,7 @@ import { Footer } from './components/Footer';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from './types';
 import { fetchSolanaTelemetry, generateEphemeralSolanaWallet, fetchWalletBalance } from './services/solanaRpc';
 import { useToast } from './components/Toast';
-import { playShieldActivate, playSuccessChime } from './services/soundEffects';
+import { playShieldActivate, playSuccessChime, playThreatWarning } from './services/soundEffects';
 import { ShieldAlert, Bot, Flame, History, Wallet, Sparkles } from 'lucide-react';
 
 export function App() {
@@ -40,6 +40,45 @@ export function App() {
 
   const [activeTab, setActiveTab] = useState<'scanner' | 'agent' | 'stream' | 'activity' | 'wallet'>('scanner');
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+
+  // Emergency Circuit Breaker (Global Outbound Freeze)
+  const [isCircuitBreakerActive, setIsCircuitBreakerActive] = useState(() => {
+    try {
+      return localStorage.getItem('neuroshield_circuit_breaker') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleCircuitBreaker = () => {
+    const next = !isCircuitBreakerActive;
+    setIsCircuitBreakerActive(next);
+    try {
+      localStorage.setItem('neuroshield_circuit_breaker', JSON.stringify(next));
+    } catch (e) {
+      // ignore
+    }
+
+    if (next) {
+      playThreatWarning();
+      showToast('🚨 Emergency Circuit Breaker ENGAGED! Outbound signing & transfers frozen.', 'error', 'Circuit Breaker Active', 5000);
+      addActivityEvent({
+        type: 'AUDIT',
+        title: 'Emergency Circuit Breaker Triggered',
+        description: 'Global kill-switch engaged: outbound transaction execution and micro-payments frozen.',
+        status: 'CRITICAL',
+      });
+    } else {
+      playShieldActivate();
+      showToast('🛡️ Circuit Breaker disengaged. Normal operations restored.', 'success', 'Shield Normalized');
+      addActivityEvent({
+        type: 'AUDIT',
+        title: 'Circuit Breaker Disengaged',
+        description: 'Standard AI Pre-Execution Firewall resumed regular heuristic monitoring.',
+        status: 'SAFE',
+      });
+    }
+  };
 
   // Live Activity Log
   const [events, setEvents] = useState<ActivityEvent[]>([
@@ -208,6 +247,8 @@ export function App() {
         telemetry={telemetry}
         wallet={wallet}
         onOpenSubmissionModal={() => setIsSubmissionModalOpen(true)}
+        isCircuitBreakerActive={isCircuitBreakerActive}
+        onToggleCircuitBreaker={handleToggleCircuitBreaker}
       />
 
       {/* Main Content */}
@@ -341,6 +382,7 @@ export function App() {
                   onDeductBalance={(amt) => {
                     handleDeductBalance(amt);
                   }}
+                  isCircuitBreakerActive={isCircuitBreakerActive}
                 />
               )}
               {activeTab === 'activity' && (
@@ -359,6 +401,7 @@ export function App() {
                     onUpdateWallet={handleUpdateWallet}
                     onGenerateNewWallet={handleGenerateWallet}
                     onClearWallet={handleClearWallet}
+                    isCircuitBreakerActive={isCircuitBreakerActive}
                   />
                 </div>
               )}
@@ -373,6 +416,7 @@ export function App() {
                 onUpdateWallet={handleUpdateWallet}
                 onGenerateNewWallet={handleGenerateWallet}
                 onClearWallet={handleClearWallet}
+                isCircuitBreakerActive={isCircuitBreakerActive}
               />
 
               {/* Hackathon Quick Summary Box */}

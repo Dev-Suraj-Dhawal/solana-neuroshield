@@ -15,6 +15,7 @@ interface WalletCardProps {
   onUpdateWallet: (updated: BurnerWallet) => void;
   onGenerateNewWallet: () => void;
   onClearWallet?: () => void;
+  isCircuitBreakerActive?: boolean;
 }
 
 export const WalletCard: React.FC<WalletCardProps> = ({
@@ -24,6 +25,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   onUpdateWallet,
   onGenerateNewWallet,
   onClearWallet,
+  isCircuitBreakerActive = false,
 }) => {
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -149,6 +151,12 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!wallet || !recipient) return;
+
+    if (isCircuitBreakerActive) {
+      showToast('Transaction blocked: Emergency Circuit Breaker is active! Disengage to proceed.', 'error', 'Circuit Breaker Active');
+      playThreatWarning();
+      return;
+    }
 
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) return;
@@ -420,9 +428,16 @@ export const WalletCard: React.FC<WalletCardProps> = ({
             </div>
           )}
 
+          {isCircuitBreakerActive && (
+            <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300 flex items-center gap-2 animate-pulse">
+              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>Emergency Circuit Breaker active: Outbound signing & transfers frozen.</span>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={sending}
+            disabled={sending || isCircuitBreakerActive}
             className="w-full py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-[#14F195] hover:opacity-95 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md shadow-purple-600/20"
           >
             {sending ? (
