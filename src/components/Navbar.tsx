@@ -9,6 +9,7 @@ interface NavbarProps {
   telemetry: NetworkTelemetry;
   wallet: BurnerWallet | null;
   onOpenSubmissionModal: () => void;
+  onOpenBenchmarkModal: () => void;
   isCircuitBreakerActive: boolean;
   onToggleCircuitBreaker: () => void;
 }
@@ -19,6 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   telemetry,
   wallet,
   onOpenSubmissionModal,
+  onOpenBenchmarkModal,
   isCircuitBreakerActive,
   onToggleCircuitBreaker,
 }) => {
@@ -82,7 +84,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          <div className="flex items-center gap-4 bg-slate-900/60 border border-slate-800 rounded-full px-4 py-1.5 text-xs text-slate-300">
+          <button
+            onClick={onOpenBenchmarkModal}
+            className="flex items-center gap-4 bg-slate-900/60 hover:bg-slate-900/95 border border-slate-800 hover:border-purple-500/50 rounded-full px-4 py-1.5 text-xs text-slate-300 transition cursor-pointer group shadow-sm hover:shadow-purple-500/10"
+            title="Click to open Live Cluster Benchmark & Gas Comparator"
+          >
             <div
               className="flex items-center gap-1.5"
               title="Transactions Per Second currently processed by the Solana cluster"
@@ -108,7 +114,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="font-mono text-slate-400">Fee:</span>
               <span className="font-mono text-purple-300">&lt;$0.0003</span>
             </div>
-          </div>
+            <span className="hidden xl:inline-block text-[10px] font-mono text-purple-400 group-hover:text-purple-300 pl-1 border-l border-slate-800">
+              ⚡ Benchmark
+            </span>
+          </button>
         </div>
 
         {/* Actions & Network Switch */}

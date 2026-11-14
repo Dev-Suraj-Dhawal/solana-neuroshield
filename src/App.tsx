@@ -8,6 +8,7 @@ import { MicroStreamCard } from './components/MicroStreamCard';
 import { ActivityFeed, ActivityEvent } from './components/ActivityFeed';
 import { QuickStartGuide } from './components/QuickStartGuide';
 import { HackathonDrawer } from './components/HackathonDrawer';
+import { ClusterBenchmarkModal } from './components/ClusterBenchmarkModal';
 import { Footer } from './components/Footer';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from './types';
 import { fetchSolanaTelemetry, generateEphemeralSolanaWallet, fetchWalletBalance } from './services/solanaRpc';
@@ -40,6 +41,7 @@ export function App() {
 
   const [activeTab, setActiveTab] = useState<'scanner' | 'agent' | 'stream' | 'activity' | 'wallet'>('scanner');
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+  const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
 
   // Emergency Circuit Breaker (Global Outbound Freeze)
   const [isCircuitBreakerActive, setIsCircuitBreakerActive] = useState(() => {
@@ -139,7 +141,10 @@ export function App() {
       else if (e.key === '2') setActiveTab('agent');
       else if (e.key === '3') setActiveTab('stream');
       else if (e.key === '4') setActiveTab('activity');
-      else if (e.key === 'Escape') setIsSubmissionModalOpen(false);
+      else if (e.key === 'Escape') {
+        setIsSubmissionModalOpen(false);
+        setIsBenchmarkModalOpen(false);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -247,6 +252,7 @@ export function App() {
         telemetry={telemetry}
         wallet={wallet}
         onOpenSubmissionModal={() => setIsSubmissionModalOpen(true)}
+        onOpenBenchmarkModal={() => setIsBenchmarkModalOpen(true)}
         isCircuitBreakerActive={isCircuitBreakerActive}
         onToggleCircuitBreaker={handleToggleCircuitBreaker}
       />
@@ -505,6 +511,14 @@ export function App() {
       <HackathonDrawer
         isOpen={isSubmissionModalOpen}
         onClose={() => setIsSubmissionModalOpen(false)}
+      />
+
+      {/* Cluster Benchmark & Gas Comparator Modal */}
+      <ClusterBenchmarkModal
+        isOpen={isBenchmarkModalOpen}
+        onClose={() => setIsBenchmarkModalOpen(false)}
+        telemetry={telemetry}
+        network={network}
       />
     </div>
   );
