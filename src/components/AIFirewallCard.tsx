@@ -11,6 +11,7 @@ interface AIFirewallCardProps {
 export const AIFirewallCard: React.FC<AIFirewallCardProps> = ({ network }) => {
   const [addressInput, setAddressInput] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [showBytecodeTrace, setShowBytecodeTrace] = useState(false);
   const [auditResult, setAuditResult] = useState<SecurityAuditResult | null>(() =>
     analyzeTargetAddress(PRESET_CONTRACTS[0].address, network)
   );
@@ -241,6 +242,40 @@ export const AIFirewallCard: React.FC<AIFirewallCardProps> = ({ network }) => {
                 <span>Zero malicious vectors identified. Contract signature clean.</span>
               </div>
             )}
+
+            {/* Raw Simulated BPF Instruction Disassembly Inspector */}
+            <div className="pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowBytecodeTrace(!showBytecodeTrace)}
+                className="text-xs text-purple-400 hover:text-purple-300 font-mono font-bold flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>{showBytecodeTrace ? '▼ Hide Instruction Disassembly' : '▶ Inspect Simulated BPF Instruction Disassembly'}</span>
+              </button>
+
+              {showBytecodeTrace && (
+                <div className="mt-2.5 p-3 rounded-lg bg-black/70 border border-slate-800 text-[11px] font-mono text-slate-300 space-y-2">
+                  <div className="flex items-center justify-between text-slate-500 border-b border-slate-900 pb-1">
+                    <span>INSTRUCTION SIMULATION TRACE</span>
+                    <span className="text-[#14F195]">4,210 COMPUTE UNITS</span>
+                  </div>
+                  <div className="space-y-1 text-slate-400">
+                    <div><span className="text-purple-400">ProgramID:</span> {auditResult.targetAddress}</div>
+                    <div><span className="text-purple-400">Opcode:</span> 0x02 (TokenTransferChecked / Delegate)</div>
+                    <div><span className="text-purple-400">Account 0:</span> User Keypair (Signer, Writable)</div>
+                    <div><span className="text-purple-400">Account 1:</span> Target Escrow (Writable)</div>
+                    <div><span className="text-purple-400">Account 2:</span> Token-2022 Program (Read-only)</div>
+                    <div>
+                      <span className="text-purple-400">Sentinel Intercept:</span>{' '}
+                      <span className={auditResult.riskLevel === 'CRITICAL' ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
+                        {auditResult.riskLevel === 'CRITICAL' ? 'BLOCKED BEFORE ON-CHAIN SIGNATURE' : 'VERIFIED SAFE TO COMMIT'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
