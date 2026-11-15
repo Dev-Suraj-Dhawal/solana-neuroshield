@@ -391,6 +391,7 @@ export function App() {
                       status: 'SUCCESS',
                     });
                   }}
+                  isCircuitBreakerActive={isCircuitBreakerActive}
                 />
               )}
               {activeTab === 'stream' && (

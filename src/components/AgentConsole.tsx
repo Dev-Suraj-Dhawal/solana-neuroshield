@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
-import { Bot, Terminal, Send, CheckCircle2, AlertCircle, ArrowUpRight, Sparkles, RefreshCw } from 'lucide-react';
+import { Bot, Terminal, Send, CheckCircle2, AlertCircle, ArrowUpRight, Sparkles, RefreshCw, AlertTriangle } from 'lucide-react';
 import { AgentAction, BurnerWallet, NetworkType } from '../types';
 import { QUICK_AGENT_PROMPTS, parseUserPromptToAgentAction, executeAgentAction } from '../services/agentEngine';
+import { useToast } from './Toast';
+import { playThreatWarning } from '../services/soundEffects';
 import confetti from 'canvas-confetti';
 
 interface AgentConsoleProps {
   wallet: BurnerWallet | null;
   network: NetworkType;
   onWalletUpdated: (wallet: BurnerWallet) => void;
+  isCircuitBreakerActive?: boolean;
 }
 
 export const AgentConsole: React.FC<AgentConsoleProps> = ({
   wallet,
   network,
   onWalletUpdated,
+  isCircuitBreakerActive = false,
 }) => {
+  const { showToast } = useToast();
   const [promptInput, setPromptInput] = useState('');
   const [currentAction, setCurrentAction] = useState<AgentAction | null>(() =>
     parseUserPromptToAgentAction('⚡ Airdrop 1 SOL to my burner wallet on Devnet', wallet, network)
@@ -35,6 +40,12 @@ export const AgentConsole: React.FC<AgentConsoleProps> = ({
 
   const handleExecute = async () => {
     if (!currentAction) return;
+
+    if (isCircuitBreakerActive) {
+      playThreatWarning();
+      showToast('Action blocked: Emergency Circuit Breaker is active! Disengage to execute transactions.', 'error', 'Circuit Breaker Active');
+      return;
+    }
 
     setIsExecuting(true);
     const res = await executeAgentAction(currentAction, network);
@@ -208,10 +219,17 @@ export const AgentConsole: React.FC<AgentConsoleProps> = ({
               </div>
             )}
 
+            {isCircuitBreakerActive && (
+              <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300 flex items-center gap-2 animate-pulse">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>Emergency Circuit Breaker active: Autonomous transaction signing is locked.</span>
+              </div>
+            )}
+
             {/* Execute Button */}
             <button
               onClick={handleExecute}
-              disabled={isExecuting}
+              disabled={isExecuting || isCircuitBreakerActive}
               className="w-full py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-[#14F195] hover:opacity-95 disabled:opacity-50 text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md shadow-purple-600/20"
             >
               {isExecuting ? (
