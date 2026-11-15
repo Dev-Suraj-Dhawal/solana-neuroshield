@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-11-15
+
+### Added
+- **Interactive Exploit Simulation Sandbox (`AttackSimulationLab.tsx`)**: Live attack reproduction lab demonstrating 4 critical Solana threat vectors (Unlimited Delegate Drainer, Token-2022 Transfer-Hook Honeypot, Unverified Upgrade Authority Backdoor, MEV Slippage Sandwich) with 380ms multi-stage simulation, stake-at-risk selectors ($10, $50, $100 SOL), and real-time defense neutralization linked directly to the Activity & Audit feed.
+- **Physical Cold-Storage Paper Backup (`PaperWalletModal.tsx`)**: High-contrast, printable cold-storage voucher with dual QR codes (Public Key & Private Key), air-gapped security guidelines, `window.print()` styling, and 1-click clipboard export.
+- **Stream Budget Escrow Capping & Progress Bar (`MicroStreamCard.tsx`)**: Added automated stream ceiling controls (`0.005`, `0.01`, `0.05` SOL, and Unlimited) with real-time percentage utilization progress bar and auto-termination when the budget cap is reached.
+- **Synthesized Web Audio Cyber Engine (`soundEffects.ts`)**: Built-in Web Audio API synthesizer for threat warnings, shield activation chimes, and transaction success audio cues without external asset dependencies.
+- **Solana Cluster Telemetry Diagnostics & Multi-Chain Gas Comparator (`ClusterBenchmarkModal.tsx`)**: Comprehensive RPC slot, latency, and multi-chain gas fee benchmark dialog (comparing Solana vs Ethereum, Arbitrum, and Polygon).
+- **JSON Security Audit Certificate & BPF Disassembly Inspector**: Downloadable JSON audit proof verifying simulation signatures and compute unit consumption for on-chain compliance.
+- **Global Emergency Circuit Breaker**: Instant kill-switch freezing outbound transaction execution, autonomous agent actions, and micro-payment streams during detected exploits.
+- **Power User Keyboard Navigation**: Instant hotkeys (<kbd>1</kbd>–<kbd>4</kbd> for tab navigation, <kbd>Esc</kbd> for closing modals).
+
+---
+
 ## [1.2.0] - 2026-11-09
 
 ### Added

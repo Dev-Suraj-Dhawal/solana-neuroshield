@@ -365,7 +365,19 @@ export function App() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Main Interactive Workstation (Left 8 Columns) */}
             <div className="lg:col-span-8 space-y-6">
-              {activeTab === 'scanner' && <AIFirewallCard network={network} />}
+              {activeTab === 'scanner' && (
+                <AIFirewallCard
+                  network={network}
+                  onAttackNeutralized={(title, amountSol) => {
+                    addActivityEvent({
+                      type: 'AUDIT',
+                      title: `Exploit Blocked: ${title}`,
+                      description: `AI Sentinel intercepted attack payload. Preserved ${amountSol} SOL ($${(amountSol * 185).toLocaleString()} USD).`,
+                      status: 'SAFE',
+                    });
+                  }}
+                />
+              )}
               {activeTab === 'agent' && (
                 <AgentConsole
                   wallet={wallet}

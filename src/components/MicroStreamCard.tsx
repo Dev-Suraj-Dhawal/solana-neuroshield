@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Flame, Play, Pause, RotateCcw, Zap, ExternalLink, ArrowUpRight, Activity } from 'lucide-react';
+import { Flame, Play, Pause, RotateCcw, Zap, ExternalLink, ArrowUpRight, Activity, ShieldCheck } from 'lucide-react';
 import { BurnerWallet, NetworkType } from '../types';
 import { generateMockTxSignature, getExplorerUrl } from '../services/solanaRpc';
+import { playSuccessChime } from '../services/soundEffects';
 import { useToast } from './Toast';
 
 interface MicroStreamCardProps {
@@ -27,6 +28,7 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
   const { showToast } = useToast();
   const [isStreaming, setIsStreaming] = useState(false);
   const [ratePerTick, setRatePerTick] = useState(0.0002); // 0.0002 SOL per tick
+  const [budgetCapSol, setBudgetCapSol] = useState<number | null>(0.005); // Auto-cut off cap
   const [ticksCount, setTicksCount] = useState(0);
   const [totalStreamed, setTotalStreamed] = useState(0);
   const [recentTicks, setRecentTicks] = useState<StreamTick[]>([]);
@@ -76,6 +78,29 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
           return;
         }
 
+        // Auto-conclude if budget cap reached
+        if (budgetCapSol !== null && totalStreamed + ratePerTick >= budgetCapSol) {
+          const finalTickAmount = Number((budgetCapSol - totalStreamed).toFixed(6));
+          if (finalTickAmount > 0) {
+            const sig = generateMockTxSignature();
+            const tick: StreamTick = {
+              id: 'TICK-' + Math.random().toString(36).substring(2, 7),
+              timestamp: new Date().toLocaleTimeString(),
+              amountSol: finalTickAmount,
+              txSignature: sig,
+            };
+            setTicksCount((c) => c + 1);
+            setTotalStreamed(budgetCapSol);
+            onDeductBalance(finalTickAmount);
+            setRecentTicks((prev) => [tick, ...prev.slice(0, 5)]);
+          }
+          setIsStreaming(false);
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          playSuccessChime();
+          showToast(`Stream concluded: Reached budget cap of ${budgetCapSol} SOL`, 'success', 'Cap Reached');
+          return;
+        }
+
         const sig = generateMockTxSignature();
         const tick: StreamTick = {
           id: 'TICK-' + Math.random().toString(36).substring(2, 7),
@@ -96,7 +121,7 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isStreaming, ratePerTick, wallet]);
+  }, [isStreaming, ratePerTick, wallet, budgetCapSol, totalStreamed]);
 
   return (
     <div className="sol-glass-card rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
@@ -168,61 +193,116 @@ export const MicroStreamCard: React.FC<MicroStreamCardProps> = ({
         </div>
 
         {/* Stream Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-slate-300 font-medium">Tick Size:</label>
-            <div className="flex gap-1.5 flex-wrap">
-              {[
-                { rate: 0.0001, usd: '$0.02' },
-                { rate: 0.0002, usd: '$0.04' },
-                { rate: 0.0005, usd: '$0.09' },
-                { rate: 0.001, usd: '$0.18' },
-              ].map(({ rate, usd }) => (
+        <div className="space-y-3 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-slate-300 font-medium">Tick Size:</label>
+              <div className="flex gap-1.5 flex-wrap">
+                {[
+                  { rate: 0.0001, usd: '$0.02' },
+                  { rate: 0.0002, usd: '$0.04' },
+                  { rate: 0.0005, usd: '$0.09' },
+                  { rate: 0.001, usd: '$0.18' },
+                ].map(({ rate, usd }) => (
+                  <button
+                    key={rate}
+                    onClick={() => setRatePerTick(rate)}
+                    disabled={isStreaming}
+                    title={`Stream ${rate} SOL (~${usd}) per tick`}
+                    className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition cursor-pointer ${
+                      ratePerTick === rate
+                        ? 'bg-purple-600 text-white shadow-sm'
+                        : 'bg-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>{rate} SOL</span>
+                    <span className="text-[10px] opacity-75 ml-1">({usd})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {!isStreaming ? (
                 <button
-                  key={rate}
-                  onClick={() => setRatePerTick(rate)}
-                  disabled={isStreaming}
-                  title={`Stream ${rate} SOL (~${usd}) per tick`}
-                  className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition cursor-pointer ${
-                    ratePerTick === rate
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'bg-slate-800 text-slate-400 hover:text-white'
-                  }`}
+                  onClick={startStream}
+                  className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-[#14F195] text-slate-950 font-bold text-xs transition cursor-pointer shadow-md shadow-purple-600/20"
                 >
-                  <span>{rate} SOL</span>
-                  <span className="text-[10px] opacity-75 ml-1">({usd})</span>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Start Stream</span>
                 </button>
-              ))}
+              ) : (
+                <button
+                  onClick={pauseStream}
+                  className="flex items-center gap-2 px-5 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs transition cursor-pointer"
+                >
+                  <Pause className="w-3.5 h-3.5 fill-current" />
+                  <span>Pause Stream</span>
+                </button>
+              )}
+
+              <button
+                onClick={resetStream}
+                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
+                title="Reset Stream"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {!isStreaming ? (
-              <button
-                onClick={startStream}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-[#14F195] text-slate-950 font-bold text-xs transition cursor-pointer shadow-md shadow-purple-600/20"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Start Stream</span>
-              </button>
-            ) : (
-              <button
-                onClick={pauseStream}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs transition cursor-pointer"
-              >
-                <Pause className="w-3.5 h-3.5 fill-current" />
-                <span>Pause Stream</span>
-              </button>
-            )}
-
-            <button
-              onClick={resetStream}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
-              title="Reset Stream"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+          {/* Budget Escrow Cap Selector */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#14F195]" />
+                <span>Budget Escrow Cap:</span>
+              </span>
+              <div className="flex gap-1.5">
+                {[
+                  { label: '0.005 SOL', value: 0.005 },
+                  { label: '0.01 SOL', value: 0.01 },
+                  { label: '0.05 SOL', value: 0.05 },
+                  { label: 'Unlimited', value: null },
+                ].map((cap) => (
+                  <button
+                    key={cap.label}
+                    onClick={() => setBudgetCapSol(cap.value)}
+                    disabled={isStreaming}
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-mono transition cursor-pointer ${
+                      budgetCapSol === cap.value
+                        ? 'bg-emerald-500/20 text-[#14F195] border border-emerald-500/40 font-bold'
+                        : 'bg-slate-800/60 text-slate-400 border border-transparent hover:text-slate-200'
+                    }`}
+                  >
+                    {cap.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <span className="text-[11px] text-slate-500 font-mono">
+              {budgetCapSol ? `Auto-concludes at ${budgetCapSol} SOL` : 'No automatic ceiling'}
+            </span>
           </div>
+
+          {/* Animated Progress Bar when Cap is Set */}
+          {budgetCapSol !== null && (
+            <div className="space-y-1 pt-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span>Cap Utilization</span>
+                <span className="text-[#14F195] font-bold">
+                  {((totalStreamed / budgetCapSol) * 100).toFixed(1)}% (
+                  {totalStreamed.toFixed(5)} / {budgetCapSol} SOL)
+                </span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-500 to-[#14F195] transition-all duration-300 rounded-full"
+                  style={{ width: `${Math.min(100, (totalStreamed / budgetCapSol) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Live Stream Micro-Ticks Feed */}

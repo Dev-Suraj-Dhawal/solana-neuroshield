@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Copy, Check, RefreshCw, ArrowUpRight, Zap, AlertTriangle, ShieldCheck, QrCode, Key, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Copy, Check, RefreshCw, ArrowUpRight, Zap, AlertTriangle, ShieldCheck, QrCode, Key, Eye, EyeOff, Trash2, Printer } from 'lucide-react';
 import { BurnerWallet, NetworkType } from '../types';
 import { requestDevnetAirdrop, getExplorerUrl } from '../services/solanaRpc';
 import { analyzeTargetAddress } from '../services/neuroEngine';
 import { useToast } from './Toast';
 import { SecurityConfirmationModal } from './SecurityConfirmationModal';
+import { PaperWalletModal } from './PaperWalletModal';
 import { playSuccessChime, playThreatWarning } from '../services/soundEffects';
 import confetti from 'canvas-confetti';
 
@@ -36,6 +37,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   // Keypair Security Details
   const [showKeyDetails, setShowKeyDetails] = useState(false);
   const [revealSecret, setRevealSecret] = useState(false);
+  const [showPaperModal, setShowPaperModal] = useState(false);
 
   // Send Form
   const [recipient, setRecipient] = useState('');
@@ -347,8 +349,16 @@ export const WalletCard: React.FC<WalletCardProps> = ({
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-slate-500">Stored in browser memory only</span>
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setShowPaperModal(true)}
+                className="px-2.5 py-1 rounded-md bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-500/30 text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                title="Print or export physical cold-storage backup"
+              >
+                <Printer className="w-3 h-3 text-[#14F195]" />
+                <span>Print Paper Backup</span>
+              </button>
               <button
                 type="button"
                 onClick={handleClearSession}
@@ -470,6 +480,14 @@ export const WalletCard: React.FC<WalletCardProps> = ({
         recipientAddress={pendingSendParams?.recipient || ''}
         amountSol={pendingSendParams?.amount.toString() || '0'}
         warningMessage={threatWarning}
+      />
+
+      {/* Paper Wallet Cold Storage Modal */}
+      <PaperWalletModal
+        isOpen={showPaperModal}
+        onClose={() => setShowPaperModal(false)}
+        wallet={wallet}
+        network={network}
       />
     </div>
   );

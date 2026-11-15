@@ -3,12 +3,15 @@ import { ShieldAlert, ShieldCheck, AlertTriangle, Bug, Terminal, ChevronRight, Z
 import { SecurityAuditResult, NetworkType } from '../types';
 import { PRESET_CONTRACTS, analyzeTargetAddress } from '../services/neuroEngine';
 import { playThreatWarning, playSuccessChime } from '../services/soundEffects';
+import { AttackSimulationLab } from './AttackSimulationLab';
 
 interface AIFirewallCardProps {
   network: NetworkType;
+  onAttackNeutralized?: (title: string, amountSol: number) => void;
 }
 
-export const AIFirewallCard: React.FC<AIFirewallCardProps> = ({ network }) => {
+export const AIFirewallCard: React.FC<AIFirewallCardProps> = ({ network, onAttackNeutralized }) => {
+  const [viewMode, setViewMode] = useState<'scanner' | 'lab'>('scanner');
   const [addressInput, setAddressInput] = useState('');
   const [scanning, setScanning] = useState(false);
   const [showBytecodeTrace, setShowBytecodeTrace] = useState(false);
@@ -64,9 +67,42 @@ export const AIFirewallCard: React.FC<AIFirewallCardProps> = ({ network }) => {
             </p>
           </div>
         </div>
+
+        {/* View Mode Switcher */}
+        <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setViewMode('scanner')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              viewMode === 'scanner'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-[#14F195]" />
+            <span>Threat Scanner</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('lab')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              viewMode === 'lab'
+                ? 'bg-gradient-to-r from-rose-600 to-purple-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Bug className="w-3.5 h-3.5 text-rose-300" />
+            <span>Attack Simulator Lab</span>
+          </button>
+        </div>
       </div>
 
-      <div className="p-5 space-y-5">
+      {viewMode === 'lab' ? (
+        <div className="p-5">
+          <AttackSimulationLab network={network} onAttackNeutralized={onAttackNeutralized} />
+        </div>
+      ) : (
+        <div className="p-5 space-y-5">
         {/* Presets Quick Picker */}
         <div>
           <label className="text-xs font-medium text-slate-400 mb-2 block">
@@ -279,6 +315,7 @@ export const AIFirewallCard: React.FC<AIFirewallCardProps> = ({ network }) => {
           </div>
         )}
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 };
