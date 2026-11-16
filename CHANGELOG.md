@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] - 2026-11-16
+
+### Added
+- **Solana Devnet Keypair Import Modal (`ImportWalletModal.tsx`)**: Enables developers and judges to import existing Devnet test wallets via Base58 private keys, keypair JSON byte arrays (`[12, 34, ...]`), or public addresses with live balance queries, 1-click Demo test key, and ephemeral browser memory storage.
+
+---
+
 ## [1.3.0] - 2026-11-15
 
 ### Added

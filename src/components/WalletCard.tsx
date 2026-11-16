@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Copy, Check, RefreshCw, ArrowUpRight, Zap, AlertTriangle, ShieldCheck, QrCode, Key, Eye, EyeOff, Trash2, Printer } from 'lucide-react';
+import { Copy, Check, RefreshCw, ArrowUpRight, Zap, AlertTriangle, ShieldCheck, QrCode, Key, Eye, EyeOff, Trash2, Printer, KeyRound } from 'lucide-react';
 import { BurnerWallet, NetworkType } from '../types';
 import { requestDevnetAirdrop, getExplorerUrl } from '../services/solanaRpc';
 import { analyzeTargetAddress } from '../services/neuroEngine';
 import { useToast } from './Toast';
 import { SecurityConfirmationModal } from './SecurityConfirmationModal';
 import { PaperWalletModal } from './PaperWalletModal';
+import { ImportWalletModal } from './ImportWalletModal';
 import { playSuccessChime, playThreatWarning } from '../services/soundEffects';
 import confetti from 'canvas-confetti';
 
@@ -38,6 +39,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   const [showKeyDetails, setShowKeyDetails] = useState(false);
   const [revealSecret, setRevealSecret] = useState(false);
   const [showPaperModal, setShowPaperModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Send Form
   const [recipient, setRecipient] = useState('');
@@ -193,12 +195,32 @@ export const WalletCard: React.FC<WalletCardProps> = ({
         <p className="text-slate-400 text-sm max-w-md mx-auto">
           Solve the beginner onboarding problem! Generate an instant zero-friction Solana burner keypair right inside your browser in 1 second.
         </p>
-        <button
-          onClick={onGenerateNewWallet}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-[#14F195] text-slate-950 font-extrabold text-sm shadow-lg shadow-purple-500/25 hover:opacity-95 transition cursor-pointer"
-        >
-          ⚡ Create Instant Burner Wallet
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+          <button
+            onClick={onGenerateNewWallet}
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-[#14F195] text-slate-950 font-extrabold text-sm shadow-lg shadow-purple-500/25 hover:opacity-95 transition cursor-pointer"
+          >
+            ⚡ Create Instant Burner Wallet
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="px-5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-purple-300 border border-purple-500/30 font-bold text-sm transition cursor-pointer flex items-center gap-2"
+          >
+            <KeyRound className="w-4 h-4 text-[#14F195]" />
+            <span>Import Existing Keypair</span>
+          </button>
+        </div>
+
+        <ImportWalletModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          network={network}
+          onImportSuccess={(w) => {
+            onUpdateWallet(w);
+            setShowImportModal(false);
+          }}
+        />
       </div>
     );
   }
@@ -350,15 +372,26 @@ export const WalletCard: React.FC<WalletCardProps> = ({
             </div>
 
             <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={() => setShowPaperModal(true)}
-                className="px-2.5 py-1 rounded-md bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-500/30 text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                title="Print or export physical cold-storage backup"
-              >
-                <Printer className="w-3 h-3 text-[#14F195]" />
-                <span>Print Paper Backup</span>
-              </button>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setShowPaperModal(true)}
+                  className="px-2.5 py-1 rounded-md bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-500/30 text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  title="Print or export physical cold-storage backup"
+                >
+                  <Printer className="w-3 h-3 text-[#14F195]" />
+                  <span>Print Paper Backup</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(true)}
+                  className="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  title="Import or switch to an existing Devnet keypair"
+                >
+                  <KeyRound className="w-3 h-3 text-cyan-400" />
+                  <span>Import Key</span>
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleClearSession}
@@ -488,6 +521,17 @@ export const WalletCard: React.FC<WalletCardProps> = ({
         onClose={() => setShowPaperModal(false)}
         wallet={wallet}
         network={network}
+      />
+
+      {/* Import Keypair Modal */}
+      <ImportWalletModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        network={network}
+        onImportSuccess={(w) => {
+          onUpdateWallet(w);
+          setShowImportModal(false);
+        }}
       />
     </div>
   );
