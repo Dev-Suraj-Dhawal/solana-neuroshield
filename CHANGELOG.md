@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.2] - 2026-11-17
+
+### Added
+- **Global Keyboard Shortcuts & Command Cheatsheet (`KeyboardShortcutsModal.tsx`)**: Interactive hotkey modal accessible via <kbd>?</kbd> or <kbd>K</kbd> (and footer trigger), enabling 1-key navigation (<kbd>1</kbd>–<kbd>4</kbd>), instant modal launching (<kbd>B</kbd> for Benchmark, <kbd>M</kbd> for MLH Hackathon tracks), and Emergency Circuit Breaker toggle (<kbd>C</kbd>).
+
+---
+
 ## [1.3.1] - 2026-11-16
 
 ### Added

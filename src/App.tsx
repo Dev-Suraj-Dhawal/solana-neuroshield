@@ -9,6 +9,7 @@ import { ActivityFeed, ActivityEvent } from './components/ActivityFeed';
 import { QuickStartGuide } from './components/QuickStartGuide';
 import { HackathonDrawer } from './components/HackathonDrawer';
 import { ClusterBenchmarkModal } from './components/ClusterBenchmarkModal';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { Footer } from './components/Footer';
 import { NetworkTelemetry, NetworkType, BurnerWallet } from './types';
 import { fetchSolanaTelemetry, generateEphemeralSolanaWallet, fetchWalletBalance } from './services/solanaRpc';
@@ -42,6 +43,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'scanner' | 'agent' | 'stream' | 'activity' | 'wallet'>('scanner');
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
   const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
 
   // Emergency Circuit Breaker (Global Outbound Freeze)
   const [isCircuitBreakerActive, setIsCircuitBreakerActive] = useState(() => {
@@ -127,7 +129,7 @@ export function App() {
     };
   }, [network]);
 
-  // Global Keyboard Shortcuts (1-4 for quick workstation tab navigation, Esc to close modal)
+  // Global Keyboard Shortcuts (1-4 for quick workstation tab navigation, Esc to close modal, ?/k for cheatsheet, b/m/c for features)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -141,15 +143,28 @@ export function App() {
       else if (e.key === '2') setActiveTab('agent');
       else if (e.key === '3') setActiveTab('stream');
       else if (e.key === '4') setActiveTab('activity');
+      else if (e.key === '?' || (e.key.toLowerCase() === 'k' && !e.ctrlKey && !e.metaKey)) {
+        setIsShortcutsModalOpen((prev) => !prev);
+      }
+      else if (e.key.toLowerCase() === 'b') {
+        setIsBenchmarkModalOpen(true);
+      }
+      else if (e.key.toLowerCase() === 'm') {
+        setIsSubmissionModalOpen(true);
+      }
+      else if (e.key.toLowerCase() === 'c') {
+        handleToggleCircuitBreaker();
+      }
       else if (e.key === 'Escape') {
         setIsSubmissionModalOpen(false);
         setIsBenchmarkModalOpen(false);
+        setIsShortcutsModalOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleToggleCircuitBreaker]);
 
   // Sync wallet balance
   useEffect(() => {
@@ -518,7 +533,10 @@ export function App() {
       </div>
 
       {/* Footer */}
-      <Footer onOpenSubmissionModal={() => setIsSubmissionModalOpen(true)} />
+      <Footer
+        onOpenSubmissionModal={() => setIsSubmissionModalOpen(true)}
+        onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
+      />
 
       {/* Hackathon Criteria Modal */}
       <HackathonDrawer
@@ -532,6 +550,16 @@ export function App() {
         onClose={() => setIsBenchmarkModalOpen(false)}
         telemetry={telemetry}
         network={network}
+      />
+
+      {/* Keyboard Shortcuts Cheatsheet Modal */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenBenchmark={() => setIsBenchmarkModalOpen(true)}
+        onOpenSubmission={() => setIsSubmissionModalOpen(true)}
+        onToggleCircuitBreaker={handleToggleCircuitBreaker}
       />
     </div>
   );

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Shield, ExternalLink, Award } from 'lucide-react';
+import { Shield, ExternalLink, Award, Command } from 'lucide-react';
 
 interface FooterProps {
   onOpenSubmissionModal: () => void;
+  onOpenShortcutsModal?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenSubmissionModal }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenSubmissionModal, onOpenShortcutsModal }) => {
   return (
     <footer className="border-t border-slate-800/80 bg-slate-950/80 pt-10 pb-8 px-4 lg:px-8 text-xs text-slate-400">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
@@ -29,6 +30,17 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSubmissionModal }) => {
             <Award className="w-3.5 h-3.5 text-amber-400" />
             <span>MLH Prize Tracks ($1,400+ Prizes)</span>
           </button>
+          {onOpenShortcutsModal && (
+            <button
+              onClick={onOpenShortcutsModal}
+              className="hover:text-purple-300 transition flex items-center gap-1.5 cursor-pointer"
+              title="View Keyboard Hotkeys & Shortcuts (Press ?)"
+            >
+              <Command className="w-3.5 h-3.5 text-purple-400" />
+              <span>Shortcuts</span>
+              <kbd className="px-1 py-0.2 rounded bg-slate-900 border border-slate-700 text-[10px] text-purple-300 font-mono">?</kbd>
+            </button>
+          )}
           <a
             href="https://docs.solana.com"
             target="_blank"
